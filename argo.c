@@ -3,23 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   argo.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: proton <proton@student.42.fr>              +#+  +:+       +#+        */
+/*   By: bproton <bproton@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/18 19:46:56 by proton            #+#    #+#             */
-/*   Updated: 2025/02/26 11:26:29 by proton           ###   ########.fr       */
+/*   Updated: 2025/02/26 15:05:36 by bproton          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "argo.h"
-
-int ft_strlen(const char *str)
-{
-    int i = 0;
-
-    while (str[i])
-        i++;
-    return (i);
-}
 
 int	peek(FILE *stream)
 {
@@ -106,18 +97,32 @@ void serialize(json j) {
     }
 }
 
-// json    *new_node(json node)
-// {
-//     json *new_node = calloc(1, sizeof(json));
-//     if (!new_node)
-//         return (NULL);
-//     *new_node = node;
-//     return (new_node);
-// }
+/*
+
+
+
+my code
+
+
+
+
+*/
+
+
+int ft_strlen(const char *str)
+{
+    int i = 0;
+
+    while (str[i])
+        i++;
+    return (i);
+}
 
 char    *ft_strcpy(char *s1, char *s2)
 {
     int i = 0;
+    if (!s1 || !s2)
+        return (NULL);
 
     while (s1[i])
     {
@@ -148,8 +153,6 @@ int parse_string(json *dst, FILE *stream)
     while (peek(stream) != '"' && peek(stream) != EOF)
     {
         str[i] = getc(stream);
-        printf("%c", str[i]);
-        printf("\n");
         i++;
     }
 
@@ -162,24 +165,50 @@ int parse_string(json *dst, FILE *stream)
 
     i = ft_strlen(str);
 
-    char *new_str = malloc(sizeof(char) * (i + 1));
+    char *new_str = calloc(i + 1, sizeof(char));
     if (!new_str)
         return (-1);
-    ft_strcpy(str, new_str);
+    if (!ft_strcpy(str, new_str))
+        return (-1);
     dst->type = STRING;
     dst->string = new_str;
     return (1);
 }
 
+int parse_map(json *dst, FILE *stream)
+{
+    dst->type = MAP;
+    
+    pair    *new_data = calloc(1, sizeof(pair));
+    if (!new_data)
+        return (-1);
+    dst->map.data = new_data;
+    
+}
+
 int argo(json *dst, FILE *stream)
 {
-    // if (accept(stream, '{'))
-    //     return (parse_map(dst, stream));
-    // else if (accept(stream, '"'))
-        return (parse_string(dst, stream));
-    // else
+    if (accept(stream, '{'))
+        return (parse_map(dst, stream));
+    // if (accept(stream, '"'))
+    //     return (parse_string(dst, stream));
+    // else if (isdigit(peek(stream)))
         // return (parse_nbr(dst, stream));
+    unexpected(stream);
+    return (-1);
 }
+
+/*
+
+
+
+
+my code
+
+
+
+
+*/
 
 
 int main(int ac, char **av) {
