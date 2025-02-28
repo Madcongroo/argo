@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   argo.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: proton <proton@student.42.fr>              +#+  +:+       +#+        */
+/*   By: bproton <bproton@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/18 19:46:56 by proton            #+#    #+#             */
-/*   Updated: 2025/02/28 10:38:51 by proton           ###   ########.fr       */
+/*   Updated: 2025/02/28 16:04:26 by bproton          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,8 +31,6 @@ void	unexpected(FILE *stream)
 
 int	accept(FILE *stream, char c)
 {
-    printf("peek : %c\n", peek(stream));
-    printf("char : %c\n", c);
 	if (peek(stream) == c)
 	{
 		(void)getc(stream);
@@ -165,6 +163,8 @@ char    *get_key(FILE *stream)
     }
     str[i] = '\0';
 
+    getc(stream); // to make the last '"' disappear
+
     i = ft_strlen(str);
 
     char *new_str = calloc(i + 1, sizeof(char));
@@ -193,6 +193,8 @@ int    parse_string(json *dst, FILE *stream)
     }
     str[i] = '\0';
 
+    getc(stream);
+    
     i = ft_strlen(str);
 
     char *new_str = calloc(i + 1, sizeof(char));
@@ -208,25 +210,22 @@ int    parse_string(json *dst, FILE *stream)
 int parse_map(json *dst, FILE *stream)
 {
     dst->type = MAP;
-    
+    size_t  size = 1;
+
     if (accept(stream, '}')) // recursion stop condition
         return (1);
-        
-    static size_t  size = 0;
+    
+    realloc(dst->map.data, sizeof(dst->map));
     
     pair    *new_data = calloc(1, sizeof(pair));
-        
     if (!new_data)
         return (-1);
 
-    if (!accept(stream, '"')) // key should always be a string
-    {
-        unexpected(stream);
+    if (!expect(stream, '"')) // key should always be a string
         return (-1);
-    }
 
     new_data->key = get_key(stream); // basically the same function as parse_str
-    
+
     if (expect(stream, ':')) // key value are separated by ':'
     {
         if (argo(&new_data->value, stream) == -1) // start recursion
@@ -234,14 +233,16 @@ int parse_map(json *dst, FILE *stream)
     }
     else
         return (-1);
+
     if (accept(stream, ','))
     {
         size += 1;
+        dst->map.data = new_data;
         if (parse_map(&new_data->value, stream) == -1)
             return (-1);
     }
     dst->map.size = size;
-    dst->map.data = new_data;
+    dst->map.data[size] = new_data;
     return (1);
 }
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   argo.h                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: proton <proton@student.42.fr>              +#+  +:+       +#+        */
+/*   By: bproton <bproton@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/18 19:46:50 by proton            #+#    #+#             */
-/*   Updated: 2025/02/26 13:43:37 by proton           ###   ########.fr       */
+/*   Updated: 2025/02/28 14:53:37 by bproton          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <malloc.h>
+#include <unistd.h>
 
 typedef struct json {
     enum {
