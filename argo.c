@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   argo.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bproton <bproton@student.42.fr>            +#+  +:+       +#+        */
+/*   By: proton <proton@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/18 19:46:56 by proton            #+#    #+#             */
-/*   Updated: 2025/02/26 15:05:36 by bproton          ###   ########.fr       */
+/*   Updated: 2025/02/28 10:38:51 by proton           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,8 @@ void	unexpected(FILE *stream)
 
 int	accept(FILE *stream, char c)
 {
+    printf("peek : %c\n", peek(stream));
+    printf("char : %c\n", c);
 	if (peek(stream) == c)
 	{
 		(void)getc(stream);
@@ -145,7 +147,35 @@ int parse_nbr(json *dst, FILE *stream)
     return (-1);
 }
 
-int parse_string(json *dst, FILE *stream)
+char    *get_key(FILE *stream)
+{
+    int i = 0;
+    char    str[300];
+
+    while (peek(stream) != '"' && peek(stream) != EOF)
+    {
+        str[i] = getc(stream);
+        i++;
+    }
+
+    if (peek(stream) == EOF)
+    {
+        unexpected(stream);
+        return (NULL);
+    }
+    str[i] = '\0';
+
+    i = ft_strlen(str);
+
+    char *new_str = calloc(i + 1, sizeof(char));
+    if (!new_str)
+        return (NULL);
+    if (!ft_strcpy(str, new_str))
+        return (NULL);
+    return (new_str);
+}
+
+int    parse_string(json *dst, FILE *stream)
 {
     int i = 0;
     char    str[300];
@@ -179,21 +209,53 @@ int parse_map(json *dst, FILE *stream)
 {
     dst->type = MAP;
     
+    if (accept(stream, '}')) // recursion stop condition
+        return (1);
+        
+    static size_t  size = 0;
+    
     pair    *new_data = calloc(1, sizeof(pair));
+        
     if (!new_data)
         return (-1);
-    dst->map.data = new_data;
+
+    if (!accept(stream, '"')) // key should always be a string
+    {
+        unexpected(stream);
+        return (-1);
+    }
+
+    new_data->key = get_key(stream); // basically the same function as parse_str
     
+    if (expect(stream, ':')) // key value are separated by ':'
+    {
+        if (argo(&new_data->value, stream) == -1) // start recursion
+            return (-1);
+    }
+    else
+        return (-1);
+    if (accept(stream, ','))
+    {
+        size += 1;
+        if (parse_map(&new_data->value, stream) == -1)
+            return (-1);
+    }
+    dst->map.size = size;
+    dst->map.data = new_data;
+    return (1);
 }
 
 int argo(json *dst, FILE *stream)
 {
     if (accept(stream, '{'))
         return (parse_map(dst, stream));
-    // if (accept(stream, '"'))
-    //     return (parse_string(dst, stream));
-    // else if (isdigit(peek(stream)))
-        // return (parse_nbr(dst, stream));
+
+    else if (accept(stream, '"'))
+        return (parse_string(dst, stream));
+        
+    else if (isdigit(peek(stream)))
+        return (parse_nbr(dst, stream));
+   
     unexpected(stream);
     return (-1);
 }
