@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   argo.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: proton <proton@student.42.fr>              +#+  +:+       +#+        */
+/*   By: bproton <bproton@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/18 19:46:56 by proton            #+#    #+#             */
-/*   Updated: 2025/03/11 13:25:32 by proton           ###   ########.fr       */
+/*   Updated: 2025/03/11 15:05:08 by bproton          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -136,9 +136,8 @@ char    *ft_strcpy(char *s1, char *s2)
 int parse_nbr(json *dst, FILE *stream)
 {
     dst->type = INTEGER;
-    while (isdigit(peek(stream)))
+    if (isdigit(peek(stream)))
     {
-        puts("in loop");
         dst->integer = getc(stream) - '0';
         return (1);
     }
@@ -210,20 +209,19 @@ int    parse_string(json *dst, FILE *stream)
 
 int parse_map(json *dst, FILE *stream)
 {
-    // puts("beginning");
     dst->type = MAP;
     static size_t  size = 0;
 
     if (accept(stream, '}')) // recursion stop condition
         return (1);
-    // puts("before realloc");
-    pair    *new_data = realloc(dst->map, sizeof(dst->map));
+    puts("before realloc");
+    pair    *new_data = realloc(dst->map.data, sizeof(dst->map.data) * size);
     if (!new_data)
         return (-1);
-    // puts("after realloc");
+    puts("after realloc");
     if (!expect(stream, '"')) // key should always be a string
         return (-1);
-    // puts("middle");
+
     new_data->key = get_key(stream); // basically the same function as parse_str
 
     if (expect(stream, ':')) // key value are separated by ':'
@@ -233,17 +231,17 @@ int parse_map(json *dst, FILE *stream)
     }
     else
         return (-1);
-    // printf("peeked = %c\n", peek(stream));
+
     if (accept(stream, ','))
     {
         size += 1;
         if (parse_map(&new_data->value, stream) == -1)
             return (-1);
-
     }
-    dst->map.size = size; // it can only loop through with at least size = 1
+    dst->map.size = size + 1;
     dst->map.data[size] = *new_data;
-    // puts("end");
+    puts("end");
+    printf("%lu", dst->map.size);
     return (1);
 }
 
@@ -254,10 +252,10 @@ int argo(json *dst, FILE *stream)
 
     else if (accept(stream, '"'))
         return (parse_string(dst, stream));
-        
+
     else if (isdigit(peek(stream)))
         return (parse_nbr(dst, stream));
-   
+
     unexpected(stream);
     return (-1);
 }
