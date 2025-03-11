@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   argo.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bproton <bproton@student.42.fr>            +#+  +:+       +#+        */
+/*   By: proton <proton@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/18 19:46:56 by proton            #+#    #+#             */
-/*   Updated: 2025/02/28 16:04:26 by bproton          ###   ########.fr       */
+/*   Updated: 2025/03/11 13:25:32 by proton           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -135,9 +135,10 @@ char    *ft_strcpy(char *s1, char *s2)
 
 int parse_nbr(json *dst, FILE *stream)
 {
-    if (isdigit(peek(stream)))
+    dst->type = INTEGER;
+    while (isdigit(peek(stream)))
     {
-        dst->type = INTEGER;
+        puts("in loop");
         dst->integer = getc(stream) - '0';
         return (1);
     }
@@ -209,21 +210,20 @@ int    parse_string(json *dst, FILE *stream)
 
 int parse_map(json *dst, FILE *stream)
 {
+    // puts("beginning");
     dst->type = MAP;
-    size_t  size = 1;
+    static size_t  size = 0;
 
     if (accept(stream, '}')) // recursion stop condition
         return (1);
-    
-    realloc(dst->map.data, sizeof(dst->map));
-    
-    pair    *new_data = calloc(1, sizeof(pair));
+    // puts("before realloc");
+    pair    *new_data = realloc(dst->map, sizeof(dst->map));
     if (!new_data)
         return (-1);
-
+    // puts("after realloc");
     if (!expect(stream, '"')) // key should always be a string
         return (-1);
-
+    // puts("middle");
     new_data->key = get_key(stream); // basically the same function as parse_str
 
     if (expect(stream, ':')) // key value are separated by ':'
@@ -233,16 +233,17 @@ int parse_map(json *dst, FILE *stream)
     }
     else
         return (-1);
-
+    // printf("peeked = %c\n", peek(stream));
     if (accept(stream, ','))
     {
         size += 1;
-        dst->map.data = new_data;
         if (parse_map(&new_data->value, stream) == -1)
             return (-1);
+
     }
-    dst->map.size = size;
-    dst->map.data[size] = new_data;
+    dst->map.size = size; // it can only loop through with at least size = 1
+    dst->map.data[size] = *new_data;
+    // puts("end");
     return (1);
 }
 
