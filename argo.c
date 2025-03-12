@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   argo.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bproton <bproton@student.42.fr>            +#+  +:+       +#+        */
+/*   By: proton <proton@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/18 19:46:56 by proton            #+#    #+#             */
-/*   Updated: 2025/03/11 15:05:08 by bproton          ###   ########.fr       */
+/*   Updated: 2025/03/12 11:35:33 by proton           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -211,11 +211,14 @@ int parse_map(json *dst, FILE *stream)
 {
     dst->type = MAP;
     static size_t  size = 0;
+    int            keep_value; // to assign to the array of "struct pair"
 
     if (accept(stream, '}')) // recursion stop condition
         return (1);
     puts("before realloc");
-    pair    *new_data = realloc(dst->map.data, sizeof(dst->map.data) * size);
+    keep_value = size;
+    size += 1;
+    pair    *new_data = realloc(dst->map.data, sizeof(pair) * size);
     if (!new_data)
         return (-1);
     puts("after realloc");
@@ -231,17 +234,17 @@ int parse_map(json *dst, FILE *stream)
     }
     else
         return (-1);
-
+    puts("before accept");
     if (accept(stream, ','))
     {
-        size += 1;
-        if (parse_map(&new_data->value, stream) == -1)
+        if (parse_map(dst, stream) == -1)
             return (-1);
     }
-    dst->map.size = size + 1;
-    dst->map.data[size] = *new_data;
+
+    dst->map.size = size;
+    printf("%lu\n", dst->map.size);
+    dst->map.data[keep_value] = *new_data;
     puts("end");
-    printf("%lu", dst->map.size);
     return (1);
 }
 
