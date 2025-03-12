@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   argo.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: proton <proton@student.42.fr>              +#+  +:+       +#+        */
+/*   By: bproton <bproton@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/18 19:46:56 by proton            #+#    #+#             */
-/*   Updated: 2025/03/12 11:35:33 by proton           ###   ########.fr       */
+/*   Updated: 2025/03/12 15:49:08 by bproton          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -207,51 +207,59 @@ int    parse_string(json *dst, FILE *stream)
     return (1);
 }
 
-int parse_map(json *dst, FILE *stream)
+int parse_map(json *dst, FILE *stream, size_t *size, size_t *capacity)
 {
     dst->type = MAP;
-    static size_t  size = 0;
-    int            keep_value; // to assign to the array of "struct pair"
 
     if (accept(stream, '}')) // recursion stop condition
         return (1);
-    puts("before realloc");
-    keep_value = size;
-    size += 1;
-    pair    *new_data = realloc(dst->map.data, sizeof(pair) * size);
+
+    (*size) += 1;
+
+    pair    *new_data = realloc(dst->map.data, sizeof(pair) * (*capacity));
     if (!new_data)
         return (-1);
-    puts("after realloc");
+    dst->map.data = new_data;
+
     if (!expect(stream, '"')) // key should always be a string
         return (-1);
 
-    new_data->key = get_key(stream); // basically the same function as parse_str
+    dst->map.data[*size - 1].key = get_key(stream); // basically the same function as parse_str
 
     if (expect(stream, ':')) // key value are separated by ':'
     {
-        if (argo(&new_data->value, stream) == -1) // start recursion
+        if (argo(&dst->map.data[*size - 1].value, stream) == -1) // start recursion
             return (-1);
     }
     else
         return (-1);
-    puts("before accept");
+
     if (accept(stream, ','))
     {
-        if (parse_map(dst, stream) == -1)
+        if (parse_map(dst, stream, size, capacity) == -1)
             return (-1);
     }
+    
+    if (peek(stream) != '}') // if the next char is not ',' nor '}' return unexpected. *exemple
+    {
+        unexpected(stream);
+        return (-1);
+    }
 
-    dst->map.size = size;
-    printf("%lu\n", dst->map.size);
-    dst->map.data[keep_value] = *new_data;
-    puts("end");
+    dst->map.size = *size;
+
     return (1);
 }
 
+// *exemple: if {"key1":"value1""key2":"value2"}, no ',' nor '}' separates the key values it should return : unexpected 'whatever is after the value'.
+
 int argo(json *dst, FILE *stream)
 {
+    size_t  size = 0;
+    size_t  capacity = 2;
+
     if (accept(stream, '{'))
-        return (parse_map(dst, stream));
+        return (parse_map(dst, stream, &size, &capacity));
 
     else if (accept(stream, '"'))
         return (parse_string(dst, stream));
