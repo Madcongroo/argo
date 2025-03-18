@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   argo.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bproton <bproton@student.42.fr>            +#+  +:+       +#+        */
+/*   By: proton <proton@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/18 19:46:56 by proton            #+#    #+#             */
-/*   Updated: 2025/03/12 15:49:08 by bproton          ###   ########.fr       */
+/*   Updated: 2025/03/18 11:16:17 by proton           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -133,16 +133,48 @@ char    *ft_strcpy(char *s1, char *s2)
     return (s2);
 }
 
+int get_number(char *str)
+{
+    int i = 0;
+    int number = 0;
+    int neg = 0;
+
+    if (str[0] == '-')
+    {
+        neg = 1;
+        i++;
+    }
+    while (str[i])
+    {
+        number = number * 10 + (str[i] - '0');
+        i++;
+    }
+    if (neg == 1) // if neg == 1 means the number is negativ
+        return (-number);
+    else
+        return (number);
+
+}
+
 int parse_nbr(json *dst, FILE *stream)
 {
     dst->type = INTEGER;
-    if (isdigit(peek(stream)))
+    char    str[500];
+    int     i = 0;
+
+    if (peek(stream) == '-')
     {
-        dst->integer = getc(stream) - '0';
-        return (1);
+        str[i] = getc(stream);
+        i++;
     }
-    unexpected(stream);
-    return (-1);
+    while (isdigit(peek(stream)))
+    {
+        str[i] = getc(stream);
+        i++;
+    }
+    str[i] = '\0';
+    dst->integer = get_number(str);
+    return (1);
 }
 
 char    *get_key(FILE *stream)
@@ -171,7 +203,10 @@ char    *get_key(FILE *stream)
     if (!new_str)
         return (NULL);
     if (!ft_strcpy(str, new_str))
+    {
+        free(new_str);
         return (NULL);
+    }
     return (new_str);
 }
 
@@ -201,7 +236,10 @@ int    parse_string(json *dst, FILE *stream)
     if (!new_str)
         return (-1);
     if (!ft_strcpy(str, new_str))
+    {
+        free(new_str);
         return (-1);
+    }
     dst->type = STRING;
     dst->string = new_str;
     return (1);
@@ -264,7 +302,7 @@ int argo(json *dst, FILE *stream)
     else if (accept(stream, '"'))
         return (parse_string(dst, stream));
 
-    else if (isdigit(peek(stream)))
+    else if (isdigit(peek(stream)) || peek(stream) == '-')
         return (parse_nbr(dst, stream));
 
     unexpected(stream);
